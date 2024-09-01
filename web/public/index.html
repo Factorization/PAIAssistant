@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Personal AI Assistant</title>
+    <title>Education Personal AI</title>
     <link rel="stylesheet" href="style/style.css">
     <script src="https://cdn.jsdelivr.net/gh/foobar404/wave.js/dist/bundle.js"></script>
   </head>
   <canvas id="thinking"></canvas>
   <canvas id="audiowaves"></canvas>
-  <audio id="ttsaudio"> </audio>    
+  <audio id="ttsaudio"> </audio>
   <div class="video-container">
-         
+
     <div id="overlayv" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); color:white;">
     <video id="videoPlayer" src="video/Avatar.mp4" loop autoplay muted playsinline style="background:rgba(0,0,0,0.3); position:fixed; object-fit: contain; display:block;">
       Your browser does not support the video tag.
@@ -28,20 +28,20 @@
           </div>
         </div>
     <div class="controls">
-      <button id="microphone-button"><img src="img/mic.png" alt="Microphone"></button>  
+      <button id="microphone-button"><img src="img/mic.png" alt="Microphone"></button>
       <div id="loading" class="loading"><span>.</span><span>.</span><span>.</span></div>
       <textarea id="inputText" rows="2" style="resize:none;"></textarea>
       <button id="sendButton">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- SVG Path for an icon (example: paper plane) -->
             <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor"/>
-        </svg>                  
+        </svg>
       </button>
       <svg id="toggleSpeechBubbles" xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" style="cursor: pointer;" fill="white">
         <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
         <circle cx="12" cy="12" r="2.5"/>
       </svg>
-      
+
       <div style="position: relative; width: 25px; height: 25px;">
         <!-- Visible SVG -->
         <svg id="toggleAvatarOn" xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user" style="position: absolute; top: 0; left: 0; cursor: pointer;display: none;">
@@ -77,7 +77,7 @@
         document.getElementById('toggleAvatarOn').addEventListener('click', function() {
           displayvideo = false;
           playaudio=false;
-          let audio = document.getElementById("ttsaudio")          
+          let audio = document.getElementById("ttsaudio")
 
           if (!audio.paused) {
               // Stop the currently playing audio
@@ -104,7 +104,7 @@
           var sendbtn = document.getElementById('sendButton');
           inputtext.style.display = 'flex';
           sendbtn.style.display = 'flex';
-          
+
 
         } else {
           speechBubbles.style.display = 'none';
@@ -125,17 +125,17 @@
         function calculateTimeDifference(startDate, endDate) {
             // Calculate the difference in milliseconds
             var difference = endDate.getTime() - startDate.getTime();
-            
+
             // Calculate seconds and milliseconds
             var seconds = Math.floor(difference / 1000); // Get whole seconds
             var milliseconds = difference % 1000; // Get remaining milliseconds
-            
+
             // Format milliseconds to always have three digits
             var formattedMilliseconds = milliseconds.toString().padStart(3, '0');
-            
+
             // Format the output as 'ss.mmm'
             var formattedDifference = `  [${seconds}.${formattedMilliseconds} s]`;
-            
+
             return formattedDifference;
         }
 
@@ -155,11 +155,11 @@
             var spinner = document.getElementById('spinner');
             var spinnerContainer = document.getElementById('spinner-container'); // The designated container
             thinking.style.display="none";
-            
+
             // Check if the spinner has a parent node
             if(spinner && spinner.parentNode) {
                 // Remove the spinner from its parent node
-                
+
                 endtime= new Date()
                 timediff = calculateTimeDifference(starttime,endtime)
 
@@ -171,13 +171,13 @@
             }
             spinner.style.display = 'none'; // Hide the spinner
             spinnerContainer.appendChild(spinner);
-            
+
         }
 
         // Function to play audio from a given URL
         function playAudio(url) {
 
-            let audio = document.getElementById("ttsaudio")          
+            let audio = document.getElementById("ttsaudio")
 
             if (!audio.paused) {
                 // Stop the currently playing audio
@@ -186,16 +186,16 @@
             }
 
             // Set the new source and play
-             
+
             let canvas = document.getElementById("audiowaves")
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             let wave = new Wave(audio,canvas)
             audio.src = url;
             audio.load();
-            
+
             canvas.style.display= "block";
-            
+
             wave?.addAnimation(new wave.animations.Cubes({
                   bottom: true,
                   count: isMobile()?10:60,
@@ -220,22 +220,22 @@
         function SetTextInputArea() {
             var textInputArea = document.getElementById('text-input-area');
             var InputArea = document.getElementById('input-area');
-            
+
             if (!config.exh.enabled) {
-              //InputArea.style.display = 'flex'; 
+              //InputArea.style.display = 'flex';
                 // Element is hidden, show it
                 textInputArea.style.display = 'flex'; // Use 'flex' or 'block', depending on your layout
-                //InputArea.style.display = 'none'; 
+                //InputArea.style.display = 'none';
             } else {
                 // Element is visible, hide it
                 textInputArea.style.display = 'none';
-                //InputArea.style.display = 'flex'; 
+                //InputArea.style.display = 'flex';
             }
         }
 
         // Function to show citation details in overlay
         window.showCitation = function(filename,text,index) {
-           
+
             document.getElementById('overlayFilename').textContent = decodeURIComponent(escape(atob(filename)));
             document.getElementById('overlayText').textContent = decodeURIComponent(escape(atob(text)));
             document.getElementById('overlay').style.display = 'block';
@@ -250,23 +250,23 @@
         {
           if(IsAPIMessage)
           {
-            hideSpinner();  
+            hideSpinner();
             if (message) {
 
               const container = document.getElementById('speechBubbles');
               const bubble = document.createElement('div');
               bubble.classList.add('speech-bubble');
               bubble.classList.toggle('hide-after');
-              
+
 
               container.prepend(bubble); // Adds the new bubble at the top
               container.scrollTop = 0; // Scrolls to the top to show the newest message
-              
-              
+
+
               var avatarElement = document.createElement('img');
               avatarElement.src = 'img/max.png'; // replace with your avatar URL
 
-              
+
               if( respObj )
               {
               var responseText = respObj.response;
@@ -276,16 +276,16 @@
 
                   responseText += ` [<a href="#" onclick="showCitation('${safeFilename}','${safeText}',${index});return false;">${index + 1}</a>]`;
               });
-             
-               
+
+
               bubble.innerHTML = responseText;
               }
               else
-              {                                
+              {
                 bubble.innerHTML = responseText;
               }
 
-               
+
               //if(!displayvideo)
               if(playaudio)
                   playAudio("audio/output/"+respObj.audio);
@@ -304,7 +304,7 @@
                         // Hide the idle video player and show the response video player
                         videoPlayer.style.display = 'none'; // Assuming videoPlayer is your idle video element
                         responseVideoPlayer.style.display = 'block';
-                        
+
                     }).catch(error => {
                         console.error("Error attempting to play response video:", error);
                         // Handle the error (e.g., by showing a play button)
@@ -315,7 +315,7 @@
                     console.error("Error loading video:", error);
                     // Handle loading error
                 };
-              }*/               
+              }*/
             }
           }
           else
@@ -324,15 +324,15 @@
               const container = document.getElementById('speechBubbles');
               const bubble = document.createElement('div');
               bubble.classList.add('speech-bubble');
-              
+
               bubble.classList.toggle('hide-before');
 
               container.prepend(bubble); // Adds the new bubble at the top
               container.scrollTop = 0; // Scrolls to the top to show the newest message
-              bubble.textContent = message;                         
-               
+              bubble.textContent = message;
+
               showSpinnerForElement(bubble);
-              
+
             }
           }
         }
@@ -344,9 +344,9 @@
         function hideLoading() {
           const micButton = document.getElementById('microphone-button');
           micButton.classList.remove('listening'); // Removes the class to hide the blinking effect
-        
+
         }
-         
+
         function trimLength(text,length)
         {
           return text.substring(0,length);
@@ -357,7 +357,7 @@
         }
         async function callPredictAPI(data,config) {
           const url = config.completion.apiendpoint;
-           
+
 
           const dataval = {
             prompt: data,
@@ -369,21 +369,21 @@
           const requestBody = {
             fn_index: 0,
             data: [promptval],
-            event_data: null,            
+            event_data: null,
             session_hash: 'dpe0pbhc8x'
           };
 
           try {
-            const response = await fetch(url, {              
+            const response = await fetch(url, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify(requestBody) 
+              body: JSON.stringify(requestBody)
             });
 
             const responseData = await response.json();
-            
+
             return responseData;
           } catch (error) {
             console.error('Error:', error);
@@ -410,7 +410,7 @@
           };
 
           fetch(config.exh.apiendpoint, options)
-            .then(response => {                           
+            .then(response => {
               return response.blob();
             })
             .then(blob => {
@@ -418,39 +418,39 @@
               const url = URL.createObjectURL(blob);
               video.src = url;
               video.loop=false;
-              video.play();                
+              video.play();
               hideLoading();
-              
+
             })
             .catch(err => {
-              
+
               hideLoading();
-              
-              
+
+
               console.error(err)
             });
-                
+
             while (!video.ended) {
             await new Promise(resolve => setTimeout(resolve, 100));
             }
-        }	  
+        }
 
 
         function ProcessInputTextPrompt() {
-          const currentTranscript = document.getElementById("inputText").value;          
+          const currentTranscript = document.getElementById("inputText").value;
           var message = currentTranscript;
           document.getElementById("inputText").value = '';
 
           DisplayMessage(message);
-                                
+
           callPredictAPI(currentTranscript,config)
           .then(response=>{
             let respObj = JSON.parse(response.data[0])
-            let message=respObj.response;  
-                      
+            let message=respObj.response;
+
             DisplayMessage(message,respObj,true)
           })
-              
+
           transcript.value = "Topic: " +currentTranscript;
           gcompletion= transcript.value;
         }
@@ -459,19 +459,19 @@
         const videoPlayer = document.getElementById('videoPlayer');
         const responseVideoPlayer = document.getElementById('responseVideoPlayer');
         const idleVideoUrl = 'video/Avatar.mp4'; // URL of your idle video
-        
+
         // Function to play the idle video
         function playIdleVideo() {
             videoPlayer.style.display='block';
             videoPlayer.playbackRate =0.75;
-            responseVideoPlayer.style.display='none';                        
+            responseVideoPlayer.style.display='none';
             videoPlayer.play()
                 .catch(error => console.error("Error trying to play the video:", error));
         }
-        
+
         function main()
         {
-             
+
 
             if( config.exh.enabled)
             {}
@@ -479,21 +479,21 @@
                 // Handle microphone input here
               startPAI();
             });
-          
+
             let max= { url:config.exh.charurl, name: config.exh.charname}
-            
+
             let idleurl = max ;
             let loop =false;
             // Create an event target object
             var eventTarget = new EventTarget();
             let recognition =null;
             let iterations=0
-            
-            
-            
+
+
+
             function startPAI() {
-              console.log('PAI Engine started');      
-               
+              console.log('PAI Engine started');
+
               showLoading()
               // stop any playing response
               const responseVideoPlayer = document.getElementById('responseVideoPlayer');
@@ -501,10 +501,10 @@
               playIdleVideo();
               recognition.start();
               loop=false;
-              
+
             }
-            
-            
+
+
             let gcompletion="";
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             // check if the browser supports the Web Speech API
@@ -522,42 +522,42 @@
               const startBtn = document.getElementById('startBtn');
               const stopBtn = document.getElementById('stopBtn');
               const transcript = document.getElementById('transcript');
-              
-              
-              
-              
-               
-                      
+
+
+
+
+
+
               // listen for results
-              
+
               recognition.onresult = function(event) {
-                recognition.stop(); 
+                recognition.stop();
                 hideLoading();
                 // get the current transcript
-                const currentTranscript = event.results[event.results.length - 1][0].transcript;                                         
+                const currentTranscript = event.results[event.results.length - 1][0].transcript;
                 let message=currentTranscript;
-                //DisplayMessage(message)                 
-                var textarea = document.getElementById('inputText'); 
+                //DisplayMessage(message)
+                var textarea = document.getElementById('inputText');
                 textarea.value = message;
-                 
+
                 /*transcript.value = "Topic: " +currentTranscript;
                 gcompletion= transcript.value;
                 callPredictAPI(currentTranscript,config)
                 .then(response=>{
                   let respObj = JSON.parse(response.data[0])
-                  let message=respObj.response;    
+                  let message=respObj.response;
                   hideLoading()
-                  
-                  if (message) {                      
-                      DisplayMessage(message,respObj,true)                      
-                      //animate(message,max,maxvideo);	
+
+                  if (message) {
+                      DisplayMessage(message,respObj,true)
+                      //animate(message,max,maxvideo);
                   }
                 })*/
               };
-              
+
             } else {
               alert('Speech recognition is not supported in this browser.');
-            }  
+            }
         }
         var textarea = document.getElementById('inputText');
         // Add an event listener for the 'keydown' event
@@ -577,10 +577,10 @@
         .then(response => response.json())
         .then(c => {
           config= c;
-          main();  
+          main();
         });
-      
-        
+
+
 
         // Initially play the idle video
         playIdleVideo();
@@ -592,7 +592,7 @@
 
       });
      </script>
-  </div>      
-  
+  </div>
+
   </body>
 </html>
