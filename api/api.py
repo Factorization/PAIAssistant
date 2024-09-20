@@ -45,7 +45,7 @@ config.read('config.ini')
 
 os.environ["GRADIO_ANALYTICS_ENABLED"]='False'
 
-indextype=config['api']['indextype'] 
+indextype=config['api']['indextype']
 
 embed_modelname = config['api']['embedmodel']
 basic_idx_dir = config['index']['basic_idx_dir']
@@ -69,19 +69,19 @@ def chatbot(data):
     isvideo= dataobj["video"]
     isaudio= dataobj["audio"]
 
-    print("User Text:" + input_text + " Video:"+ str(isvideo) + " Audio:"+ str(isaudio))    
-    
-    response =query_engine.query(input_text)        
- 
+    print("User Text:" + input_text + " Video:"+ str(isvideo) + " Audio:"+ str(isaudio))
+
+    response =query_engine.query(input_text)
+
     # Save the output
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    
+
     if isaudio:
         output_audfile=f"output_{timestamp}.wav"
         output_path = "../web/public/audio/output/"+output_audfile
         if ttsengine == 'coqui':
-            tts.tts_to_file(text=response.response, file_path=output_path ) 
-            #tts.tts_to_file(text=response.response, speaker="p226", file_path=output_path )             
+            tts.tts_to_file(text=response.response, file_path=output_path )
+            #tts.tts_to_file(text=response.response, speaker="p226", file_path=output_path )
         elif ttsengine == 'gtts':
             tts = gTTS(text=response.response, lang='en')
             tts.save(output_path)
@@ -107,7 +107,7 @@ def chatbot(data):
             "text": node.get_text()
         } for node in response.source_nodes
     ]
-    
+
     # Creating the JSON object structure
     jsonResponse = {
         "response": response.response,
@@ -115,12 +115,12 @@ def chatbot(data):
         "audio": output_audfile,
         "citation": citation
     }
-    
+
     # Convert to JSON string
     jsonResponseStr = json.dumps(jsonResponse, indent=4)
-        
+
     return jsonResponseStr
-    
+
 logging.basicConfig(stream=sys.stdout, level=log_level)
 logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 iface = gr.Interface(fn=chatbot,
@@ -128,7 +128,7 @@ iface = gr.Interface(fn=chatbot,
                      outputs="text",
                      title="Email data query")
 
- 
+
 from langchain_community.llms import LlamaCpp
 from langchain.globals import set_llm_cache
 from langchain.cache import InMemoryCache
@@ -145,10 +145,10 @@ else:
     modelname = config['api']['local_modelname']
     n_gpu_layers = -1  # Change this value based on your model and your GPU VRAM pool.
     n_batch = 2048  # Should be between 1 and n_ctx, consider the amount of VRAM in your GPU.
-    
+
     #cache prompt/response pairs for faster retrieval next time.
     set_llm_cache(InMemoryCache())
-    
+
     llm = LlamaCpp(
     model_path="./models/"+ modelname,
     cache=True,
@@ -159,16 +159,16 @@ else:
     temperature=0.01,
     max_tokens=512,
     f16_kv=True,
-    repeat_penalty=1.1,    
+    repeat_penalty=1.1,
     top_p=0.95,
     top_k=40,
-    stop=["<|end_of_turn|>"]  
+    stop=["<|end_of_turn|>"]
     )
 
 
 Settings.llm = llm
 Settings.embed_model = embed_modelname
- 
+
 index_directory=''
 if indextype == 'basic':
     index_directory = basic_idx_dir
@@ -183,8 +183,8 @@ if ttsengine == 'coqui':
     tts = TTS(model_name="tts_models/en/ljspeech/vits--neon", progress_bar=False).to("cuda")
     #tts = TTS(model_name="tts_models/en/vctk/vits", progress_bar=False).to("cuda")
 elif ttsengine == 'gtts':
-    tts = gTTS(text='', lang='en')        
-else: 
+    tts = gTTS(text='', lang='en')
+else:
     tts = pyttsx3.init()
     voices = tts.getProperty('voices')
     tts.setProperty('voice', voices[1].id)  # this is female voice
@@ -194,7 +194,7 @@ else:
 
 # load index
 storage_context = StorageContext.from_defaults(persist_dir=index_directory)
-index = load_index_from_storage(storage_context=storage_context)   
+index = load_index_from_storage(storage_context=storage_context)
 if indextype == 'basic':
     query_engine = index.as_query_engine()
 elif indextype == 'sentence' :
@@ -204,11 +204,11 @@ elif indextype == 'automerge':
 
 #prompts_dict = query_engine.get_prompts()
 #print(list(prompts_dict.keys()))
-    
+
 # Optional: Adjust prompts to suit the llms.
 
 qa_prompt_tmpl_str = (
-    "GPT4 User: You are an assistant named Maggie. You assist with any questions regarding the organization kwaai.\n"    
+    "GPT4 User: You are an assistant named Homer. You assist with any questions regarding the Rutgers University.\n"
     "Today is " + datetime.now().strftime('%d %B %Y') + "\n"
     "Use the following pieces of context to answer the question at the end. Do not answer questions outside the given context. Context information is below\n"
     "----------------------\n"
