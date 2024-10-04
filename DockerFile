@@ -39,7 +39,7 @@ RUN npm install
 WORKDIR /pai/api
 RUN pip3 install --no-cache-dir --no-deps -r requirements.txt
 RUN CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
-RUN pip3 install TTS simpleaudio gtts
+RUN pip3 install TTS=0.22.0 simpleaudio=1.0.4 gTTS=2.5.3
 WORKDIR /pai
 
 # Expose port 4000 for the application
