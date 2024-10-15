@@ -80,8 +80,8 @@ def chatbot(data):
         output_audfile=f"output_{timestamp}.wav"
         output_path = "../web/public/audio/output/"+output_audfile
         if ttsengine == 'coqui':
-            tts.tts_to_file(text=response.response, file_path=output_path )
-            #tts.tts_to_file(text=response.response, speaker="p226", file_path=output_path )
+            # tts.tts_to_file(text=response.response, file_path=output_path )
+            tts.tts_to_file(text=response.response, speaker="p330", file_path=output_path )
         elif ttsengine == 'gtts':
             tts = gTTS(text=response.response, lang='en')
             tts.save(output_path)
