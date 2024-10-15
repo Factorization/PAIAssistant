@@ -1,5 +1,4 @@
-from llama_index.core import StorageContext, load_index_from_storage
-from llama_index.core import Settings
+from llama_index.core import StorageContext, load_index_from_storage, ServiceContext
 import gradio as gr
 import sys
 import os
@@ -13,11 +12,24 @@ import simpleaudio as sa
 import threading
 from datetime import datetime
 import json
-
+import subprocess
 from llama_index.core.prompts.base import PromptTemplate
-
+# from inference import main as generateVideo
 import pyttsx3
+import torch
 
+# def run_inference(checkpoint_path, face_video, audio_file, resize_factor, outfile):
+
+#     # Construct the command with dynamic parameters
+#     command = [
+#         "--checkpoint_path", checkpoint_path,
+#         "--face", face_video,
+#         "--audio", audio_file,
+#         "--resize_factor", str(resize_factor),
+#         "--outfile", outfile
+#     ]
+#     print(command)
+#     generateVideo(command)
 
 
 
@@ -67,35 +79,39 @@ def chatbot(data):
     dataobj = json.loads(data)
     input_text=  dataobj["prompt"]
     isvideo= dataobj["video"]
-    isaudio= dataobj["audio"]
-
-    print("User Text:" + input_text + " Video:"+ str(isvideo) + " Audio:"+ str(isaudio))
+    print("User Text:" + input_text + " Video:"+ str(isvideo))
+    if torch.cuda.is_available():
+        # Set the GPU device to 0
+        torch.cuda.set_device(0)
 
     response =query_engine.query(input_text)
 
     # Save the output
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    output_audfile=f"output_{timestamp}.wav"
+    output_vidfile=f"output_{timestamp}.mp4"
+    output_path = "../web/public/audio/output/"+output_audfile
 
-    if isaudio:
-        output_audfile=f"output_{timestamp}.wav"
-        output_path = "../web/public/audio/output/"+output_audfile
-        if ttsengine == 'coqui':
-            tts.tts_to_file(text=response.response, file_path=output_path )
-            #tts.tts_to_file(text=response.response, speaker="p226", file_path=output_path )
-        elif ttsengine == 'gtts':
-            tts = gTTS(text=response.response, lang='en')
-            tts.save(output_path)
-        else:
-            tts.save_to_file(response.response , output_path)
-            tts.runAndWait()
+
+    if ttsengine == 'coqui':
+        #tts.tts_to_file(text=response.response, speaker="p330", file_path=output_path )
+        tts.tts_to_file(text=response.response, speaker_wav="joe.wav",language="en",split_sentences=True, file_path=output_path )
+    elif ttsengine == 'gtts':
+        tts = gTTS(text=response.response, lang='en')
+        tts.save(output_path)
     else:
-        output_audfile=None
+        tts.save_to_file(response.response , output_path)
+        tts.runAndWait()
 
     if isvideo:
-        # No support for video. Use libraries like wav2lip or sadtalker etc!
-        output_vidfile=f"output_{timestamp}.mp4"
+        checkpoint_path = "./checkpoints/wav2lip_gan.pth"
+        face_video = "media/Avatar.mp4"
+        audio_file = "../web/public/audio/output/"+output_audfile
+        outfile="../web/public/video/output/"+output_vidfile
+        resize_factor = 1
+        # run_inference(checkpoint_path, face_video, audio_file, resize_factor, outfile)
     else:
-        output_vidfile=None
+        outfile="video/Avatar.mp4"
 
     #play_sound_then_delete(output_path)
 
@@ -160,14 +176,18 @@ else:
     max_tokens=512,
     f16_kv=True,
     repeat_penalty=1.1,
+    min_p=0.05,
     top_p=0.95,
     top_k=40,
     stop=["<|end_of_turn|>"]
     )
 
 
-Settings.llm = llm
-Settings.embed_model = embed_modelname
+
+
+service_context = ServiceContext.from_defaults(
+    llm=llm, embed_model=embed_modelname
+)
 
 index_directory=''
 if indextype == 'basic':
@@ -180,10 +200,12 @@ elif indextype == 'automerge':
 print(config['api']['indextype'] )
 print(index_directory)
 if ttsengine == 'coqui':
-    tts = TTS(model_name="tts_models/en/ljspeech/vits--neon", progress_bar=False).to("cuda")
+    #tts = TTS(model_name="tts_models/en/ljspeech/vits--neon", progress_bar=False).to("cuda")
     #tts = TTS(model_name="tts_models/en/vctk/vits", progress_bar=False).to("cuda")
+    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to("cuda")
+    #tts = TTS("tts_models/de/thorsten/tacotron2-DDC").to("cuda")
 elif ttsengine == 'gtts':
-    tts = gTTS(text='', lang='en')
+    tts = gTTS(text='Hi', lang='en')
 else:
     tts = pyttsx3.init()
     voices = tts.getProperty('voices')
@@ -194,13 +216,13 @@ else:
 
 # load index
 storage_context = StorageContext.from_defaults(persist_dir=index_directory)
-index = load_index_from_storage(storage_context=storage_context)
+index = load_index_from_storage(storage_context=storage_context, service_context=service_context)
 if indextype == 'basic':
     query_engine = index.as_query_engine()
 elif indextype == 'sentence' :
     query_engine =get_sentence_window_query_engine(index)
 elif indextype == 'automerge':
-    query_engine = get_automerging_query_engine(automerging_index=index)
+    query_engine = get_automerging_query_engine(automerging_index=index, service_context=service_context)
 
 #prompts_dict = query_engine.get_prompts()
 #print(list(prompts_dict.keys()))
@@ -218,6 +240,7 @@ qa_prompt_tmpl_str = (
     "question: {query_str}\n"
     "<|end_of_turn|>GPT4 Assistant:"
 )
+
 qa_prompt_tmpl = PromptTemplate(qa_prompt_tmpl_str)
 query_engine.update_prompts(
     {"response_synthesizer:text_qa_template": qa_prompt_tmpl}
@@ -225,3 +248,4 @@ query_engine.update_prompts(
 
 
 iface.launch( share=False, server_name=serverip, server_port=int(serverport), ssl_verify=False, ssl_keyfile=sslkey, ssl_certfile=sslcert)
+# iface.launch( share=False, server_name=serverip, server_port=int(serverport))
