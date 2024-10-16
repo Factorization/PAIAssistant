@@ -180,8 +180,8 @@ elif indextype == 'automerge':
 print(config['api']['indextype'] )
 print(index_directory)
 if ttsengine == 'coqui':
-    tts = TTS(model_name="tts_models/en/ljspeech/vits--neon", progress_bar=False).to("cuda")
-    #tts = TTS(model_name="tts_models/en/vctk/vits", progress_bar=False).to("cuda")
+    #tts = TTS(model_name="tts_models/en/ljspeech/vits--neon", progress_bar=False).to("cuda")
+    tts = TTS(model_name="tts_models/en/vctk/vits", progress_bar=False).to("cuda")
 elif ttsengine == 'gtts':
     tts = gTTS(text='', lang='en')
 else:
