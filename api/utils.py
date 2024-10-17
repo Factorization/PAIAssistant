@@ -1,15 +1,15 @@
 import os
-from llama_index.core import Settings
-from llama_index.core import VectorStoreIndex, StorageContext
+
+from llama_index.core import ServiceContext, VectorStoreIndex, StorageContext
 from llama_index.core.node_parser import SentenceWindowNodeParser
-from llama_index.core.postprocessor import MetadataReplacementPostProcessor
-from llama_index.core.postprocessor import SentenceTransformerRerank
+from llama_index.core.indices.postprocessor import MetadataReplacementPostProcessor
+from llama_index.core.indices.postprocessor import SentenceTransformerRerank
 from llama_index.core import load_index_from_storage
 import os
 
 
 def build_sentence_window_index(
-    documents, llm, embed_model="local:BAAI/bge-small-en-v1.5", save_dir="sentence_index"
+    document, llm, embed_model="local:BAAI/bge-small-en-v1.5", save_dir="sentence_index"
 ):
     # create the sentence window node parser w/ default settings
     node_parser = SentenceWindowNodeParser.from_defaults(
@@ -17,23 +17,21 @@ def build_sentence_window_index(
         window_metadata_key="window",
         original_text_metadata_key="original_text",
     )
-    Settings.node_parser=node_parser
-    Settings.llm = llm
-    Settings.embed_model=embed_model
-    
-    # If directory not present  or if present but empty.
-    if not os.path.exists(save_dir) or (os.path.exists(save_dir) and not os.listdir(save_dir)):
+    sentence_context = ServiceContext.from_defaults(
+        llm=llm,
+        embed_model=embed_model,
+        node_parser=node_parser,
+    )
+    if not os.path.exists(save_dir):
         sentence_index = VectorStoreIndex.from_documents(
-            documents
+            document, service_context=sentence_context
         )
         sentence_index.storage_context.persist(persist_dir=save_dir)
     else:
         sentence_index = load_index_from_storage(
-            StorageContext.from_defaults(persist_dir=save_dir)            
+            StorageContext.from_defaults(persist_dir=save_dir),
+            service_context=sentence_context,
         )
-        # pickup any changes in documents and update index
-        sentence_index.refresh_ref_docs(documents)
-        sentence_index.storage_context.persist(persist_dir=save_dir)
 
     return sentence_index
 
@@ -75,39 +73,29 @@ def build_automerging_index(
     node_parser = HierarchicalNodeParser.from_defaults(chunk_sizes=chunk_sizes)
     nodes = node_parser.get_nodes_from_documents(documents)
     leaf_nodes = get_leaf_nodes(nodes)
-    Settings.llm = llm
-    Settings.embed_model = embed_model
-    
-    if not os.path.exists(save_dir) or (os.path.exists(save_dir) and not os.listdir(save_dir)):
-        storage_context = StorageContext.from_defaults()
-        storage_context.docstore.add_documents(nodes)
+    merging_context = ServiceContext.from_defaults(
+        llm=llm,
+        embed_model=embed_model,
+    )
+    storage_context = StorageContext.from_defaults()
+    storage_context.docstore.add_documents(nodes)
+
+    if not os.path.exists(save_dir):
         automerging_index = VectorStoreIndex(
-            leaf_nodes, storage_context=storage_context
+            leaf_nodes, storage_context=storage_context, service_context=merging_context
         )
         automerging_index.storage_context.persist(persist_dir=save_dir)
     else:
         automerging_index = load_index_from_storage(
-            StorageContext.from_defaults(persist_dir=save_dir)            
+            StorageContext.from_defaults(persist_dir=save_dir),
+            service_context=merging_context,
         )
-        # Remove docstore and index entries.
-        for doc in documents:            
-            for doc_key, ref_doc_info in automerging_index.docstore.get_all_ref_doc_info().items():                
-                if ref_doc_info.metadata['file_name'] == doc.metadata['file_name']:                    
-                    try:
-                        automerging_index.delete_ref_doc(doc_key)
-                    except KeyError:
-                        pass
-                    automerging_index.docstore.delete_ref_doc(doc_key)
-                    
-        # pickup any changes in document and update index   
-        automerging_index.docstore.add_documents(nodes)
-        automerging_index.insert_nodes(leaf_nodes)
-        automerging_index.storage_context.persist(persist_dir=save_dir)
     return automerging_index
 
 
 def get_automerging_query_engine(
-    automerging_index,    
+    automerging_index,
+    service_context,
     similarity_top_k=12,
     rerank_top_n=3,
 ):
@@ -116,10 +104,9 @@ def get_automerging_query_engine(
         base_retriever, automerging_index.storage_context, verbose=False
     )
     rerank = SentenceTransformerRerank(
-        top_n=rerank_top_n, model="BAAI/bge-reranker-large"
+        top_n=rerank_top_n, model="BAAI/bge-reranker-base"
     )
     auto_merging_engine = RetrieverQueryEngine.from_args(
-        retriever=retriever, node_postprocessors=[rerank]
+        retriever=retriever,service_context=service_context, node_postprocessors=[rerank]
     )
     return auto_merging_engine
-
